@@ -22,15 +22,18 @@ app.post('/api', async (req, res) => {
 	try {
 		const gasRes = await fetch(GAS_URL, {
 			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(req.body),
+			headers: {
+				...req.headers, // 保留原始 header
+			},
+			body: req, // 保留原始 stream（重點！）
 		});
-		const result = await gasRes.json();
-		console.log('✅ GAS 回傳結果：', result);
-		res.json(result); // ⬅️ 回傳給前端
+
+		const resultText = await gasRes.text(); // 可能是 text，不一定是 json
+		console.log('✅ GAS 回傳結果：', resultText);
+		res.send(resultText);
 	} catch (err) {
-		res.status(500).send('連接 GAS 失敗');
-		console.error(`❌ 連接 GAS 失敗`, err.message);
+		console.error(`❌ Proxy to GAS 失敗`, err.message);
+		res.status(500).send('Proxy 到 GAS 發生錯誤');
 	}
 });
 app.listen(PORT, () => {
